@@ -1,0 +1,593 @@
+
+import { useMemo, useState } from 'react'
+import {
+  Activity,
+  ArrowDownRight,
+  ArrowUpRight,
+  Bell,
+  Boxes,
+  Check,
+  ChevronDown,
+  CircleHelp,
+  Clock3,
+  Code2,
+  GitBranch,
+  LayoutDashboard,
+  Menu,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react'
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+import './App.css'
+
+type Project = {
+  id: number
+  name: string
+  description: string
+  progress: number
+  status: string
+  team: number
+  color: string
+}
+
+const initialProjects: Project[] = [
+  {
+    id: 1,
+    name: 'Cloud Infrastructure',
+    description: 'Infrastructure automation and cloud migration',
+    progress: 78,
+    status: 'In Progress',
+    team: 8,
+    color: 'purple',
+  },
+  {
+    id: 2,
+    name: 'DevPulse API',
+    description: 'Backend services and API development',
+    progress: 64,
+    status: 'In Progress',
+    team: 5,
+    color: 'blue',
+  },
+  {
+    id: 3,
+    name: 'Security Integration',
+    description: 'DevSecOps and security monitoring',
+    progress: 92,
+    status: 'Review',
+    team: 4,
+    color: 'green',
+  },
+]
+
+const chartData = [
+  { day: 'Mon', builds: 18, deployments: 12 },
+  { day: 'Tue', builds: 25, deployments: 17 },
+  { day: 'Wed', builds: 21, deployments: 15 },
+  { day: 'Thu', builds: 32, deployments: 23 },
+  { day: 'Fri', builds: 27, deployments: 19 },
+  { day: 'Sat', builds: 38, deployments: 29 },
+  { day: 'Sun', builds: 34, deployments: 25 },
+]
+
+const activities = [
+  {
+    icon: GitBranch,
+    title: 'New deployment completed',
+    detail: 'DevPulse API · Production',
+    time: '12 minutes ago',
+    color: 'green',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Security scan completed',
+    detail: 'Cloud Infrastructure · No critical issues',
+    time: '38 minutes ago',
+    color: 'purple',
+  },
+  {
+    icon: Users,
+    title: 'Team member joined',
+    detail: 'Security Integration',
+    time: '1 hour ago',
+    color: 'blue',
+  },
+  {
+    icon: Boxes,
+    title: 'Build pipeline updated',
+    detail: 'DevPulse API · CI/CD',
+    time: '2 hours ago',
+    color: 'orange',
+  },
+]
+
+function App() {
+  const [projects, setProjects] = useState(initialProjects)
+  const [search, setSearch] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activePage, setActivePage] = useState('Overview')
+  const [newProjectName, setNewProjectName] = useState('')
+  const [newProjectDescription, setNewProjectDescription] = useState('')
+
+  const filteredProjects = useMemo(
+    () =>
+      projects.filter((project) =>
+        `${project.name} ${project.description}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      ),
+    [projects, search],
+  )
+
+  const createProject = () => {
+    const name = newProjectName.trim()
+    if (!name) return
+
+    const project: Project = {
+      id: Date.now(),
+      name,
+      description: newProjectDescription.trim() || 'New project workspace',
+      progress: 0,
+      status: 'Planning',
+      team: 1,
+      color: 'blue',
+    }
+
+    setProjects((current) => [project, ...current])
+    setNewProjectName('')
+    setNewProjectDescription('')
+    setShowModal(false)
+  }
+
+  const navigation = [
+    { label: 'Overview', icon: LayoutDashboard },
+    { label: 'Projects', icon: Boxes },
+    { label: 'Teams', icon: Users },
+    { label: 'Pipelines', icon: GitBranch },
+    { label: 'Security', icon: ShieldCheck },
+  ]
+
+  return (
+    <div className="app-shell">
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <div className="brand">
+          <div className="brand-icon">
+            <Activity size={22} />
+          </div>
+          <div>
+            <h2>DevPulse</h2>
+            <span>DEVELOPMENT PLATFORM</span>
+          </div>
+          <button
+            className="icon-button mobile-close"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <X size={19} />
+          </button>
+        </div>
+
+        <div className="workspace">
+          <div className="workspace-avatar">DP</div>
+          <div className="workspace-info">
+            <strong>DevPulse Workspace</strong>
+            <span>Enterprise Plan</span>
+          </div>
+          <ChevronDown size={15} />
+        </div>
+
+        <div className="nav-section">
+          <span className="nav-heading">WORKSPACE</span>
+          {navigation.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.label}
+                className={`nav-item ${activePage === item.label ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage(item.label)
+                  setSidebarOpen(false)
+                }}
+              >
+                <Icon size={18} />
+                <span>{item.label}</span>
+                {item.label === 'Security' && (
+                  <span className="nav-count">3</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="nav-section tools-section">
+          <span className="nav-heading">PREFERENCES</span>
+          <button className="nav-item" onClick={() => setActivePage('Settings')}>
+            <Settings size={18} />
+            <span>Settings</span>
+          </button>
+          <button className="nav-item" onClick={() => setActivePage('Help Center')}>
+            <CircleHelp size={18} />
+            <span>Help Center</span>
+          </button>
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="upgrade-card">
+            <div className="upgrade-icon">
+              <Zap size={17} />
+            </div>
+            <strong>Unlock more power</strong>
+            <p>Explore advanced tools for your team.</p>
+            <button onClick={() => setActivePage('Upgrade')}>Explore plans</button>
+          </div>
+          <div className="profile">
+            <div className="profile-avatar">HB</div>
+            <div className="profile-info">
+              <strong>Workspace Admin</strong>
+              <span>Administrator</span>
+            </div>
+            <ChevronDown size={16} />
+          </div>
+        </div>
+      </aside>
+
+      {sidebarOpen && (
+        <button
+          className="sidebar-overlay"
+          aria-label="Close navigation"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <main className="main-content">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              className="icon-button mobile-menu"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <Menu size={21} />
+            </button>
+            <div className="breadcrumb">
+              <span>Workspace</span>
+              <span className="breadcrumb-separator">/</span>
+              <strong>{activePage}</strong>
+            </div>
+          </div>
+
+          <div className="topbar-actions">
+            <div className="top-search">
+              <Search size={16} />
+              <input
+                type="search"
+                placeholder="Search projects..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <kbd>⌘ K</kbd>
+            </div>
+            <div className="notification-wrapper">
+              <button
+                className="icon-button notification-button"
+                onClick={() => setShowNotifications(!showNotifications)}
+                aria-label="Notifications"
+              >
+                <Bell size={19} />
+                <span className="notification-dot" />
+              </button>
+              {showNotifications && (
+                <div className="notification-popover">
+                  <div className="popover-heading">
+                    <strong>Notifications</strong>
+                    <span>3 new</span>
+                  </div>
+                  <p>Your latest workspace updates will appear here.</p>
+                  <button onClick={() => setShowNotifications(false)}>
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="top-avatar">HB</div>
+          </div>
+        </header>
+
+        <div className="page-container">
+          <section className="welcome-section">
+            <div>
+              <div className="eyebrow">
+                <span className="status-pulse" />
+                WORKSPACE OVERVIEW
+              </div>
+              <h1>Welcome back, Admin <span>✦</span></h1>
+              <p>Monitor your projects, deployments, and team performance.</p>
+            </div>
+            <button className="primary-button" onClick={() => setShowModal(true)}>
+              <Plus size={18} />
+              New Project
+            </button>
+          </section>
+
+          <section className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-top">
+                <span>Total Projects</span>
+                <div className="stat-icon purple-bg"><Boxes size={19} /></div>
+              </div>
+              <div className="stat-value">{projects.length.toString().padStart(2, '0')}</div>
+              <div className="stat-footer">
+                <span className="trend positive"><ArrowUpRight size={14} /> 12.5%</span>
+                <span>vs last month</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-top">
+                <span>Active Deployments</span>
+                <div className="stat-icon blue-bg"><GitBranch size={19} /></div>
+              </div>
+              <div className="stat-value">24</div>
+              <div className="stat-footer">
+                <span className="trend positive"><ArrowUpRight size={14} /> 8.2%</span>
+                <span>vs last month</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-top">
+                <span>Team Members</span>
+                <div className="stat-icon green-bg"><Users size={19} /></div>
+              </div>
+              <div className="stat-value">18</div>
+              <div className="stat-footer">
+                <span className="trend positive"><ArrowUpRight size={14} /> 4.6%</span>
+                <span>vs last month</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-top">
+                <span>Security Issues</span>
+                <div className="stat-icon orange-bg"><ShieldCheck size={19} /></div>
+              </div>
+              <div className="stat-value">03</div>
+              <div className="stat-footer">
+                <span className="trend negative"><ArrowDownRight size={14} /> 2.1%</span>
+                <span>vs last month</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-grid">
+            <div className="panel performance-panel">
+              <div className="panel-header">
+                <div>
+                  <h3>Deployment Activity</h3>
+                  <p>Build and deployment performance this week</p>
+                </div>
+                <button className="select-button">
+                  This week <ChevronDown size={15} />
+                </button>
+              </div>
+
+              <div className="chart-legend">
+                <span><i className="legend-dot builds-dot" /> Builds</span>
+                <span><i className="legend-dot deployments-dot" /> Deployments</span>
+              </div>
+
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="buildGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.28} />
+                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="deployGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="#242b3b" strokeDasharray="3 5" vertical={false} />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#818ba0', fontSize: 12 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#818ba0', fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#171e2d',
+                        border: '1px solid #30394c',
+                        borderRadius: '10px',
+                        color: '#fff',
+                      }}
+                    />
+                    <Area type="monotone" dataKey="builds" stroke="#9b7aff" strokeWidth={2.5} fill="url(#buildGradient)" />
+                    <Area type="monotone" dataKey="deployments" stroke="#36c98b" strokeWidth={2.5} fill="url(#deployGradient)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="panel pipeline-panel">
+              <div className="panel-header">
+                <div>
+                  <h3>Pipeline Health</h3>
+                  <p>Current CI/CD status</p>
+                </div>
+                <button className="more-button" aria-label="More pipeline options">•••</button>
+              </div>
+
+              <div className="pipeline-score">
+                <div className="score-ring">
+                  <div className="score-inner">
+                    <strong>96<span>%</span></strong>
+                    <small>Healthy</small>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pipeline-details">
+                <div><span className="detail-dot green-dot" /> Successful builds <strong>128</strong></div>
+                <div><span className="detail-dot red-dot" /> Failed builds <strong>04</strong></div>
+                <div><span className="detail-dot yellow-dot" /> Running builds <strong>08</strong></div>
+              </div>
+              <div className="pipeline-footer">
+                <span><Check size={14} /> All systems operational</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="bottom-grid">
+            <div className="panel projects-panel">
+              <div className="panel-header">
+                <div>
+                  <h3>Active Projects</h3>
+                  <p>Track progress across your workspace</p>
+                </div>
+                <button className="text-button" onClick={() => setActivePage('Projects')}>
+                  View all <ArrowUpRight size={15} />
+                </button>
+              </div>
+
+              <div className="projects-list">
+                {filteredProjects.length > 0 ? (
+                  filteredProjects.map((project) => (
+                    <div className="project-row" key={project.id}>
+                      <div className={`project-symbol ${project.color}`}>
+                        <Code2 size={19} />
+                      </div>
+                      <div className="project-main">
+                        <div className="project-title-row">
+                          <strong>{project.name}</strong>
+                          <span className={`project-status ${project.status.toLowerCase().replace(' ', '-')}`}>
+                            {project.status}
+                          </span>
+                        </div>
+                        <p>{project.description}</p>
+                        <div className="progress-row">
+                          <div className="progress-track">
+                            <div
+                              className={`progress-fill ${project.color}`}
+                              style={{ width: `${project.progress}%` }}
+                            />
+                          </div>
+                          <span>{project.progress}%</span>
+                        </div>
+                      </div>
+                      <div className="project-team">
+                        <Users size={14} />
+                        {project.team}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <Search size={22} />
+                    <p>No matching projects found.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="panel activity-panel">
+              <div className="panel-header">
+                <div>
+                  <h3>Recent Activity</h3>
+                  <p>Latest workspace events</p>
+                </div>
+                <button className="more-button" aria-label="More activity options">•••</button>
+              </div>
+
+              <div className="activity-list">
+                {activities.map((activity, index) => {
+                  const Icon = activity.icon
+                  return (
+                    <div className="activity-item" key={index}>
+                      <div className={`activity-icon ${activity.color}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="activity-content">
+                        <strong>{activity.title}</strong>
+                        <p>{activity.detail}</p>
+                        <span><Clock3 size={12} /> {activity.time}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+
+          <footer className="dashboard-footer">
+            <span>© 2026 DevPulse. All rights reserved.</span>
+            <span><span className="footer-status" /> All services operational</span>
+          </footer>
+        </div>
+      </main>
+
+      {showModal && (
+        <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+          <div className="project-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h2>Create New Project</h2>
+                <p>Add a new project to your workspace.</p>
+              </div>
+              <button className="icon-button" onClick={() => setShowModal(false)} aria-label="Close modal">
+                <X size={19} />
+              </button>
+            </div>
+
+            <label htmlFor="project-name">Project Name</label>
+            <input
+              id="project-name"
+              value={newProjectName}
+              onChange={(event) => setNewProjectName(event.target.value)}
+              placeholder="Enter project name"
+              maxLength={80}
+            />
+
+            <label htmlFor="project-description">Description</label>
+            <textarea
+              id="project-description"
+              value={newProjectDescription}
+              onChange={(event) => setNewProjectDescription(event.target.value)}
+              placeholder="Describe your project"
+              maxLength={240}
+            />
+
+            <div className="modal-actions">
+              <button className="secondary-button" onClick={() => setShowModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                onClick={createProject}
+                disabled={!newProjectName.trim()}
+              >
+                <Plus size={16} /> Create Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App
+ 
