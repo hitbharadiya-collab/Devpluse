@@ -1,0 +1,40 @@
+﻿import fs from 'node:fs'
+import path from 'node:path'
+import pool from './config/database.js'
+
+export async function initializeDatabase() {
+  try {
+    const schemaPath = path.resolve(process.cwd(), 'server/database/schema.sql')
+    const projectsPath = path.resolve(process.cwd(), 'server/database/projects.sql')
+
+    if (fs.existsSync(schemaPath)) {
+      await pool.query(fs.readFileSync(schemaPath, 'utf8'))
+    }
+    if (fs.existsSync(projectsPath)) {
+      await pool.query(fs.readFileSync(projectsPath, 'utf8'))
+    }
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS teams (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        email VARCHAR(160) UNIQUE NOT NULL,
+        role VARCHAR(60) NOT NULL DEFAULT 'Engineer',
+        status VARCHAR(40) NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS pipelines (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(150) NOT NULL,
+        branch VARCHAR(100) NOT NULL DEFAULT 'main',
+        status VARCHAR(40) NOT NULL DEFAULT 'Success',
+        duration VARCHAR(40) NOT NULL DEFAULT '1m 24s',
+        triggered_by VARCHAR(120) NOT NULL DEFAULT 'System',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `)
+    console.log('Database tables verified/initialized successfully.')
+  } catch (err) {
+    console.error('Database initialization warning:', err)
+  }
+}

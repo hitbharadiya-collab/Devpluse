@@ -1,17 +1,22 @@
-import app from './app.js'
+﻿import app from './app.js'
 import { env } from './config/env.js'
+import { initializeDatabase } from './init-db.js'
 
-const server = app.listen(env.PORT, '127.0.0.1', () => {
-  console.log(`DevPulse API is running at http://localhost:${env.PORT}`)
-  console.log(`Environment: ${env.NODE_ENV}`)
-})
+async function start() {
+  await initializeDatabase()
 
-server.on('error', (error: NodeJS.ErrnoException) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Port ${env.PORT} is already in use.`)
-  } else {
-    console.error('Failed to start the DevPulse API server.')
-  }
+  const server = app.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`DevPulse Full-Stack Server running on port ${env.PORT} (${env.NODE_ENV})`)
+  })
 
-  process.exit(1)
-})
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${env.PORT} is already in use.`)
+    } else {
+      console.error('Failed to start the DevPulse server:', error)
+    }
+    process.exit(1)
+  })
+}
+
+start()

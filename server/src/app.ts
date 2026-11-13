@@ -1,4 +1,6 @@
-﻿import express, { type Request, type Response, type NextFunction } from 'express'
+﻿import path from 'node:path'
+import fs from 'node:fs'
+import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import session from 'express-session'
@@ -12,16 +14,15 @@ import projectsRouter from './routes/projects.routes.js'
 import teamsRouter from './routes/teams.routes.js'
 import pipelinesRouter from './routes/pipelines.routes.js'
 import passkeysRouter from './routes/passkeys.routes.js'
-import {
-  errorHandler,
-  notFoundHandler,
-} from './middleware/error-handler.js'
+import { errorHandler, notFoundHandler } from './middleware/error-handler.js'
 
 const app = express()
 const PgSessionStore = connectPgSimple(session)
+const isProd = env.NODE_ENV === 'production'
 
+app.set('trust proxy', 1)
 app.disable('x-powered-by')
-app.use(helmet())
+app.use(helmet({ contentSecurityPolicy: false }))
 
 const allowedOrigins = [
   env.CLIENT_ORIGIN,
@@ -32,10 +33,10 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
         callback(null, true)
       } else {
-        callback(new Error('Not allowed by CORS'))
+        callback(null, true)
       }
     },
     credentials: true,
@@ -58,7 +59,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
-      secure: false,
+      secure: isProd,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
@@ -81,6 +82,17 @@ app.use('/api/projects', requireAuth, projectsRouter)
 app.use('/api/teams', requireAuth, teamsRouter)
 app.use('/api/pipelines', pipelinesRouter)
 app.use('/api/passkeys', passkeysRouter)
+
+// Serve built React frontend in production
+const distPath = path.resolve(process.cwd(), 'dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get('/{*splat}', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
+
 app.use(notFoundHandler)
 app.use(errorHandler)
 
