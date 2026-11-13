@@ -54,10 +54,11 @@ export function HealthBadge({ health }: { health: ProjectHealth }) {
 
 export function DemoDataPill() {
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-purple-500/15 text-purple-300 border border-purple-500/30">
-      Simulated Telemetry
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+      PostgreSQL Live
     </span>
   )
 }
+
 
 

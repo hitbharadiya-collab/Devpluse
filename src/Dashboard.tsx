@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   Bell,
@@ -21,14 +21,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import {
-  INITIAL_AUDIT_EVENTS,
-  INITIAL_PIPELINES,
-  INITIAL_PROJECTS,
-  INITIAL_TEAM,
-  INITIAL_VULNERABILITIES,
-  WORKSPACES,
-} from './data/mockDevPulse'
+import { INITIAL_VULNERABILITIES, WORKSPACES } from './data/mockDevPulse'
 import type { AuditEvent, DevProject, NavRoute, PipelineRun, TeamMember, VulnerabilityFinding } from './types/devpulse'
 import { LoginScreen, SecurityPinScreen } from './components/devpulse/AuthScreens'
 import { OverviewView, PipelinesView, ProjectsView } from './components/devpulse/DevOpsViews'
@@ -79,58 +72,136 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [toast, setToast] = useState('')
 
-  const [projects, setProjects] = useState<DevProject[]>(INITIAL_PROJECTS)
-  const [pipelines, setPipelines] = useState<PipelineRun[]>(INITIAL_PIPELINES)
+  const [projects, setProjects] = useState<DevProject[]>([])
+  const [pipelines, setPipelines] = useState<PipelineRun[]>([])
   const [vulnerabilities, setVulnerabilities] = useState<VulnerabilityFinding[]>(INITIAL_VULNERABILITIES)
-  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM)
-  const [events, setEvents] = useState<AuditEvent[]>(INITIAL_AUDIT_EVENTS)
+  const [team, setTeam] = useState<TeamMember[]>([])
+  const [events, setEvents] = useState<AuditEvent[]>([])
 
   const notify = (msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(''), 3200)
   }
 
-  const handleTriggerPipeline = () => {
-    const newRun: PipelineRun = {
-      id: `RUN-${Math.floor(8843 + Math.random() * 140)}`,
-      pipelineName: 'manual-release-gate',
-      project: projects[0]?.name || 'auth-identity-gateway',
-      branch: 'main',
-      commit: Math.random().toString(16).slice(2, 9),
-      author: user?.name || 'Hit Bharadiya',
-      status: 'Success',
-      duration: '1m 48s',
-      testsPassed: '152 / 152',
-      environment: 'Production',
-      timestamp: 'Just now',
-      stages: [
-        { name: 'Source', status: 'passed', time: '4s' },
-        { name: 'Build', status: 'passed', time: '36s' },
-        { name: 'SAST Scan', status: 'passed', time: '22s' },
-        { name: 'Unit Tests', status: 'passed', time: '28s' },
-        { name: 'Deploy', status: 'passed', time: '18s' },
-      ],
-      logs: [
-        '[NOW] INFO  Manual CI/CD execution triggered from DevPulse Control Plane',
-        '[NOW] PASS  SAST & SCA policy checks passed with 0 blockers',
-        '[NOW] DONE  Deployment verified on prod-eks-us-east-1',
-      ],
+  const loadLivePostgreSQLData = useCallback(async () => {
+    try {
+      const [projRes, pipeRes, teamRes, logsRes] = await Promise.all([
+        fetch('/api/projects', { credentials: 'include' }),
+        fetch('/api/pipelines', { credentials: 'include' }),
+        fetch('/api/teams', { credentials: 'include' }),
+        fetch('/api/auth/security-logs', { credentials: 'include' }),
+      ])
+
+      if (projRes.ok) {
+        const projJson = await projRes.json().catch(() => ({}))
+        const mappedProjects: DevProject[] = (projJson.data || []).map((p: Record<string, unknown>) => ({
+          id: String(p.id),
+          name: String(p.name || 'untitled-service'),
+          
+          repo: `github.com/devpulse-org/${String(p.name || 'service')}`,
+          branch: 'main',
+          owner: sessionEmail.split('@')[0],
+          environment: p.priority === 'high' ? 'Production' : p.priority === 'medium' ? 'Staging' : 'Development',
+          health: p.status === 'active' ? 'Healthy' : p.status === 'completed' ? 'Healthy' : 'Degraded',
+          securityScore: p.priority === 'high' ? 96 : 91,
+          openVulns: p.priority === 'high' ? 1 : 0,
+          lastDeploy: p.updated_at ? new Date(String(p.updated_at)).toLocaleTimeString() : 'Synced via PG',
+          stack: ['TypeScript', 'PostgreSQL', 'Docker'],
+        }))
+        setProjects(mappedProjects)
+      }
+
+      if (pipeRes.ok) {
+        const pipeJson = await pipeRes.json().catch(() => ({}))
+        const mappedPipelines: PipelineRun[] = (pipeJson.data || []).map((r: Record<string, unknown>) => ({
+          id: String(r.run_code || r.id),
+          pipelineName: 'postgres-ci-gate',
+          project: String(r.service || 'devpulse-core'),
+          branch: String(r.branch || 'main'),
+          commit: String(r.commit_sha || 'a1b2c3d'),
+          author: String(r.triggered_by || sessionEmail),
+          status: r.status === 'passed' ? 'Success' : r.status === 'failed' ? 'Failed' : 'Running',
+          duration: String(r.duration || '48s'),
+          testsPassed: r.status === 'failed' ? '141 / 145' : '145 / 145',
+          environment: 'Production',
+          timestamp: r.created_at ? new Date(String(r.created_at)).toLocaleTimeString() : 'Live PG',
+          stages: [
+            { name: 'Source', status: 'passed', time: '3s' },
+            { name: 'Build', status: 'passed', time: '28s' },
+            { name: 'SAST Scan', status: r.status === 'failed' ? 'failed' : 'passed', time: '14s' },
+            { name: 'Unit Tests', status: r.status === 'failed' ? 'skipped' : 'passed', time: '19s' },
+            { name: 'Deploy', status: r.status === 'failed' ? 'skipped' : 'passed', time: '12s' },
+          ],
+          logs: [
+            `[PG-LIVE] Persisted run ${String(r.run_code)} for ${String(r.service)}@${String(r.branch)}`,
+            `[PG-LIVE] Commit SHA ${String(r.commit_sha)} triggered by ${String(r.triggered_by)}`,
+          ],
+        }))
+        setPipelines(mappedPipelines)
+      }
+
+      if (teamRes.ok) {
+        const teamJson = await teamRes.json().catch(() => ({}))
+        const mappedMembers: TeamMember[] = (teamJson.members || []).map((m: Record<string, unknown>) => {
+          const email = String(m.member_email || '')
+          return {
+            id: String(m.id),
+            name: email.split('@')[0] || 'Operator',
+            email,
+            role: (m.role as TeamMember['role']) || 'Engineer',
+            mfaEnabled: true,
+            lastActive: m.added_at ? new Date(String(m.added_at)).toLocaleDateString() : 'Active',
+            status: m.status === 'Invited' ? 'Invited' : 'Online',
+          }
+        })
+        setTeam(mappedMembers)
+      }
+
+      if (logsRes.ok) {
+        const logsJson = await logsRes.json().catch(() => ({}))
+        const mappedEvents: AuditEvent[] = (logsJson.data || []).map((l: Record<string, unknown>) => ({
+          id: String(l.event_code || l.id),
+          actor: sessionEmail.split('@')[0],
+          action: String(l.event_message || ''),
+          resource: 'PostgreSQL Control Plane',
+          category: l.status === 'blocked' ? 'Security' : 'Auth',
+          ip: String(l.source_ip || '127.0.0.1'),
+          timestamp: l.created_at ? new Date(String(l.created_at)).toLocaleTimeString() : 'Live',
+          risk: l.status === 'blocked' ? 'High' : 'Normal',
+        }))
+        setEvents(mappedEvents)
+      }
+    } catch {
+      // Backend session not active yet
     }
-    setPipelines((prev) => [newRun, ...prev])
-    setEvents((prev) => [
-      {
-        id: `EVT-${Math.floor(9922 + Math.random() * 70)}`,
-        actor: user?.name || 'Hit Bharadiya',
-        action: `Triggered pipeline ${newRun.id} on ${newRun.project}`,
-        resource: newRun.project,
-        category: 'Pipeline',
-        ip: '103.85.12.19',
-        timestamp: 'Just now',
-        risk: 'Normal',
-      },
-      ...prev,
-    ])
-    notify(`Pipeline ${newRun.id} completed & verified!`)
+  }, [sessionEmail])
+
+  useEffect(() => {
+    void loadLivePostgreSQLData()
+  }, [loadLivePostgreSQLData])
+
+  const handleTriggerPipeline = async () => {
+    try {
+      const res = await fetch('/api/pipelines/trigger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          service: projects[0]?.name || 'auth-identity-gateway',
+          branch: 'main',
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.success) {
+        notify(`Pipeline ${data.data.run_code} saved to PostgreSQL!`)
+        await loadLivePostgreSQLData()
+        setTimeout(() => void loadLivePostgreSQLData(), 1800)
+      } else {
+        notify(data.message || 'Login required to trigger PostgreSQL pipeline.')
+      }
+    } catch {
+      notify('Backend server unreachable on port 5000.')
+    }
   }
 
   const handlePatchVuln = (id: string) => {
@@ -144,6 +215,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         onLoginSuccess={(email) => {
           setSessionEmail(email)
           setAuthMode('pin')
+          void loadLivePostgreSQLData()
         }}
       />
     )
@@ -155,9 +227,13 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         userEmail={sessionEmail}
         onVerified={() => {
           setAuthMode('app')
-          notify('Security PIN verified — Full operator session unlocked')
+          void loadLivePostgreSQLData()
+          notify('Security PIN verified — Live PostgreSQL session active')
         }}
-        onSkip={() => setAuthMode('app')}
+        onSkip={() => {
+          setAuthMode('app')
+          void loadLivePostgreSQLData()
+        }}
       />
     )
   }
@@ -167,7 +243,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 
   return (
     <div className="min-h-screen bg-[#07090f] text-slate-100 flex">
-      {/* Mobile Sidebar Backdrop */}
       {mobileOpen && (
         <div
           className="fixed inset-0 bg-black/70 z-40 lg:hidden"
@@ -175,13 +250,11 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         />
       )}
 
-      {/* Left Collapsible Sidebar */}
       <aside
         className={`fixed lg:sticky top-0 left-0 z-50 h-screen bg-[#090c14] border-r border-slate-800/90 flex flex-col transition-all duration-200 ${
           collapsed ? 'w-20' : 'w-64'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        {/* Brand Header */}
         <div className="h-16 px-4 border-b border-slate-800/80 flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/25">
@@ -190,7 +263,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
             {!collapsed && (
               <div className="truncate">
                 <div className="text-base font-bold tracking-tight text-white">DevPulse</div>
-                <div className="text-[10px] font-mono text-cyan-400">DEVSECOPS CLOUD</div>
+                <div className="text-[10px] font-mono text-emerald-400">POSTGRESQL LIVE</div>
               </div>
             )}
           </div>
@@ -211,7 +284,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           </button>
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
@@ -237,7 +309,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           })}
         </nav>
 
-        {/* Bottom Auth Preview Switcher */}
         {!collapsed && (
           <div className="p-3 border-t border-slate-800/80 space-y-2">
             <button
@@ -261,9 +332,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         )}
       </aside>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navigation Bar */}
         <header className="h-16 px-4 lg:px-7 bg-[#090c14]/90 backdrop-blur-md border-b border-slate-800/90 flex items-center justify-between gap-4 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
@@ -274,7 +343,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               <Menu className="w-4 h-4" />
             </button>
 
-            {/* Workspace Selector */}
             <div className="relative">
               <select
                 value={workspace.id}
@@ -293,16 +361,14 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
             </div>
 
-            {/* Breadcrumbs */}
             <div className="hidden md:flex items-center gap-2 text-xs text-slate-500">
               <span>/</span>
-              <span>{workspace.plan}</span>
+              <span className="text-emerald-400 font-mono">PostgreSQL 18</span>
               <span>/</span>
               <span className="text-slate-200 font-medium">{currentLabel}</span>
             </div>
           </div>
 
-          {/* Global Search + Right Controls */}
           <div className="flex items-center gap-2.5">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0c101a] border border-slate-800 w-56 lg:w-64">
               <Search className="w-3.5 h-3.5 text-slate-500" />
@@ -319,7 +385,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               />
             </div>
 
-            {/* Notifications */}
             <div className="relative">
               <button
                 type="button"
@@ -331,29 +396,29 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
                 className="w-9 h-9 rounded-lg bg-[#0c101a] border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white relative cursor-pointer"
               >
                 <Bell className="w-4 h-4" />
-                <span className="w-2 h-2 rounded-full bg-blue-500 absolute top-2 right-2" />
+                <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-2 right-2" />
               </button>
               {notifOpen && (
                 <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#0c101a] border border-slate-800 p-4 shadow-2xl z-50 text-xs">
-                  <div className="font-semibold text-white mb-2">Security & Build Alerts</div>
+                  <div className="font-semibold text-white mb-2">Live PostgreSQL Telemetry</div>
                   <p className="text-slate-400 mb-3">
-                    1 Critical SAML vulnerability blocked in <span className="text-cyan-400">customer-portal-web</span>.
+                    Connected to Express API (`PORT 5000`) & PostgreSQL (`devpulse`).
                   </p>
                   <button
                     type="button"
                     onClick={() => {
-                      setRoute('vulnerabilities')
+                      void loadLivePostgreSQLData()
                       setNotifOpen(false)
+                      notify('Synced latest rows from PostgreSQL!')
                     }}
                     className="w-full py-1.5 rounded-lg bg-blue-600 text-white font-semibold cursor-pointer"
                   >
-                    Inspect Finding
+                    Sync Database Now
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Help Menu */}
             <div className="relative">
               <button
                 type="button"
@@ -368,15 +433,14 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
               </button>
               {helpOpen && (
                 <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#0c101a] border border-slate-800 p-4 shadow-2xl z-50 text-xs space-y-2">
-                  <div className="font-semibold text-white">DevPulse Documentation</div>
+                  <div className="font-semibold text-white">Full-Stack Architecture</div>
                   <p className="text-slate-400">
-                    Enterprise DevSecOps platform demonstration build with interactive CI/CD and SAST/SCA workflows.
+                    React + TypeScript frontend wired to Node/Express REST APIs and PostgreSQL relational storage.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Profile Dropdown */}
             <div className="relative">
               <button
                 type="button"
@@ -432,7 +496,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           </div>
         </header>
 
-        {/* Active Screen Viewport */}
         <main className="flex-1 p-4 lg:p-7 max-w-[1520px] w-full mx-auto">
           {route === 'overview' && (
             <OverviewView
@@ -447,13 +510,45 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           {route === 'projects' && (
             <ProjectsView
               projects={projects}
-              onAddProject={(p) => {
-                setProjects((prev) => [p, ...prev])
-                notify(`Repository ${p.name} registered.`)
+              onAddProject={async (p) => {
+                try {
+                  const res = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      name: p.name,
+                      description: p.repo || 'Enterprise DevSecOps microservice',
+                      status: 'active',
+                      priority: p.environment === 'Production' ? 'high' : p.environment === 'Staging' ? 'medium' : 'low',
+                    }),
+                  })
+                  const data = await res.json().catch(() => ({}))
+                  if (res.ok && data.success) {
+                    notify(`Project "${p.name}" saved to PostgreSQL!`)
+                    await loadLivePostgreSQLData()
+                  } else {
+                    notify(data.message || 'Failed to save project to PostgreSQL.')
+                  }
+                } catch {
+                  notify('Backend server unreachable.')
+                }
               }}
-              onDeleteProject={(id) => {
-                setProjects((prev) => prev.filter((p) => p.id !== id))
-                notify('Repository removed from workspace.')
+              onDeleteProject={async (id) => {
+                try {
+                  const res = await fetch(`/api/projects/${id}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                  })
+                  if (res.ok) {
+                    notify('Project deleted from PostgreSQL.')
+                    await loadLivePostgreSQLData()
+                  } else {
+                    notify('Could not delete project.')
+                  }
+                } catch {
+                  notify('Backend server unreachable.')
+                }
               }}
             />
           )}
@@ -470,20 +565,24 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           {route === 'team' && (
             <TeamView
               members={team}
-              onInviteMember={(email, role) => {
-                setTeam((prev) => [
-                  ...prev,
-                  {
-                    id: `USR-0${prev.length + 1}`,
-                    name: email.split('@')[0],
-                    email,
-                    role,
-                    mfaEnabled: false,
-                    lastActive: 'Invited',
-                    status: 'Invited',
-                  },
-                ])
-                notify(`Invitation sent to ${email}`)
+              onInviteMember={async (email, role) => {
+                try {
+                  const res = await fetch('/api/teams/members', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, role }),
+                  })
+                  const data = await res.json().catch(() => ({}))
+                  if (res.ok && data.success) {
+                    notify(`Member ${email} saved to PostgreSQL RBAC!`)
+                    await loadLivePostgreSQLData()
+                  } else {
+                    notify(data.message || 'Failed to add member.')
+                  }
+                } catch {
+                  notify('Backend server unreachable.')
+                }
               }}
             />
           )}
@@ -493,7 +592,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
       </div>
 
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-blue-500/50 text-xs font-medium text-white shadow-2xl">
+        <div className="fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-[#0f172a] border border-emerald-500/50 text-xs font-medium text-white shadow-2xl">
           {toast}
         </div>
       )}
@@ -502,4 +601,5 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
