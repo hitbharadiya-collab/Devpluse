@@ -2,9 +2,7 @@
 @import "tailwindcss";
 
 @layer base {
-  html {
-    font-size: 14px;
-  }
+  html { font-size: 13px; }
 
   html, body, #root {
     background-color: #07090f;
@@ -28,5 +26,6 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
 
 
