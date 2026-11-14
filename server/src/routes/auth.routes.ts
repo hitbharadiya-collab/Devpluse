@@ -1,4 +1,25 @@
-﻿import crypto from 'node:crypto'
+﻿async function sendDevPulseOtpBrevo(toEmail, otpCode) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER;
+  if (!apiKey || !senderEmail) {
+    console.log(`[DevPulse OTP Fallback] Code for ${toEmail}: ${otpCode}`);
+    return false;
+  }
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "accept": "application/json", "api-key": apiKey, "content-type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "DevPulse", email: senderEmail },
+      to: [{ email: toEmail }],
+      subject: "Your DevPulse Verification Code",
+      htmlContent: `<div style="font-family:sans-serif;padding:20px"><h2>DevPulse Login Verification</h2><p>Your 6-digit OTP code is:</p><h1 style="letter-spacing:4px;color:#2563eb">${otpCode}</h1><p>This code expires in 10 minutes.</p></div>`
+    })
+  });
+  if (!res.ok) { const err = await res.text(); console.error("[DevPulse OTP] Brevo error:", err); return false; }
+  console.log(`[DevPulse OTP] Sent via Brevo to ${toEmail}`);
+  return true;
+}
+import crypto from 'node:crypto'
 import { Router, type Request, type Response } from 'express'
 import 'express-session'
 import bcrypt from 'bcryptjs'
@@ -119,22 +140,7 @@ async function sendOtpEmail(toEmail: string, otpCode: string): Promise<boolean> 
       auth: { user: smtpUser, pass: smtpPass },
     })
 
-    await transporter.sendMail({
-      from: `"DevPulse Security" <${smtpUser}>`,
-      to: toEmail,
-      subject: `${otpCode} is your DevPulse Security Verification OTP`,
-      html: `
-        <div style="font-family:Inter,Arial,sans-serif;background:#070d19;color:#f8fafc;padding:28px;border-radius:12px;max-width:460px;">
-          <h2 style="margin:0 0 8px;color:#38bdf8;">DevPulse Zero-Trust Verification</h2>
-          <p style="color:#94a3b8;font-size:14px;margin:0 0 20px;">Use the 6-digit one-time verification code below to unlock your DevSecOps workspace. Expires in 5 minutes.</p>
-          <div style="background:#0f172a;border:1px solid #1e293b;padding:16px;text-align:center;border-radius:10px;font-size:28px;font-weight:700;letter-spacing:8px;color:#22d3ee;">
-            ${otpCode}
-          </div>
-          <p style="color:#64748b;font-size:12px;margin-top:20px;">If you did not initiate this sign-in, secure your credentials immediately.</p>
-        </div>
-      `,
-    })
-    return true
+    await sendDevPulseOtpBrevo(email, otp);return true
   } catch (err) {
     console.error('[DevPulse OTP] SMTP dispatch error:', err)
     console.log(`[DevPulse OTP Fallback] Code for ${toEmail}: ${otpCode}`)
@@ -656,5 +662,6 @@ authRouter.get('/security-logs', async (_req: Request, res: Response) => {
 })
 
 export default authRouter
+
 
 
