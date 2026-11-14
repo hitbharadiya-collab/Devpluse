@@ -15,6 +15,14 @@ export async function initializeDatabase() {
     }
 
     await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(160);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_code VARCHAR(12);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(128);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
       CREATE TABLE IF NOT EXISTS teams (
         id SERIAL PRIMARY KEY,
         name VARCHAR(120) NOT NULL,
@@ -33,7 +41,7 @@ export async function initializeDatabase() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `)
-    console.log('Database tables verified/initialized successfully.')
+    console.log('Database tables & 2FA/OAuth columns verified/initialized successfully.')
   } catch (err) {
     console.error('Database initialization warning:', err)
   }
