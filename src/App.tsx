@@ -663,7 +663,7 @@ function App() {
                     value={digit}
                     onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                     style={{
-                      height: '46px',
+                      width: '100%', minWidth: 0, boxSizing: 'border-box', padding: 0, height: '46px',
                       textAlign: 'center',
                       fontSize: '18px',
                       fontWeight: 700,
@@ -1043,5 +1043,6 @@ function App() {
 }
 
 export default App
+
 
 
