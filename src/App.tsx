@@ -40,7 +40,6 @@ function App() {
   const [passkeyLoading, setPasskeyLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Step 2: Mandatory Backend OTP + 2FA TOTP Verification State
   const [otpStep, setOtpStep] = useState(false)
   const [pendingEmail, setPendingEmail] = useState('')
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
@@ -50,7 +49,6 @@ function App() {
   const [demoOtpHint, setDemoOtpHint] = useState('')
   const [resendingOtp, setResendingOtp] = useState(false)
 
-  // Dashboard 2FA Setup Modal State
   const [show2faModal, setShow2faModal] = useState(false)
   const [qrData, setQrData] = useState<{ secret: string; qrUrl: string } | null>(null)
   const [setup2faCode, setSetup2faCode] = useState('')
@@ -59,7 +57,6 @@ function App() {
   useEffect(() => {
     let active = true
 
-    // Handle redirect query params from Google OAuth callback
     const params = new URLSearchParams(window.location.search)
     const authError = params.get('authError')
     const otpPending = params.get('otpPending')
@@ -377,7 +374,6 @@ function App() {
   if (user) {
     return (
       <div style={{ position: 'relative' }}>
-        {/* Floating 2FA Security Control Pill */}
         <button
           type="button"
           onClick={() => void open2faSetup()}
@@ -533,7 +529,6 @@ function App() {
     )
   }
 
-  /* ==================== STEP 2: MANDATORY BACKEND OTP + 2FA SCREEN ==================== */
   if (otpStep) {
     return (
       <div
@@ -683,35 +678,33 @@ function App() {
               </div>
             </div>
 
-            {(requiresTotp || true) && (
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>
-                  {requiresTotp
-                    ? 'Authenticator App 2FA Code (Required)'
-                    : 'Authenticator App 2FA Code (Optional unless 2FA enabled)'}
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  required={requiresTotp}
-                  value={totpCode}
-                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder={requiresTotp ? '6-digit Authenticator code' : 'Leave blank if 2FA not yet enabled'}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    border: '1px solid #263349',
-                    background: '#090f1d',
-                    color: '#fff',
-                    fontSize: '14px',
-                    letterSpacing: '2px',
-                  }}
-                />
-              </div>
-            )}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>
+                {requiresTotp
+                  ? 'Authenticator App 2FA Code (Required)'
+                  : 'Authenticator App 2FA Code (Optional unless 2FA enabled)'}
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                required={requiresTotp}
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                placeholder={requiresTotp ? '6-digit Authenticator code' : 'Leave blank if 2FA not yet enabled'}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid #263349',
+                  background: '#090f1d',
+                  color: '#fff',
+                  fontSize: '14px',
+                  letterSpacing: '2px',
+                }}
+              />
+            </div>
 
             <button
               type="submit"
@@ -781,7 +774,6 @@ function App() {
     )
   }
 
-  /* ==================== STEP 1: LOGIN / REGISTER + CONTINUE WITH GOOGLE ==================== */
   return (
     <div
       style={{
@@ -826,7 +818,6 @@ function App() {
           </div>
         </div>
 
-        {/* Continue with Google SSO Button */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
