@@ -1190,7 +1190,7 @@ function Dashboard({ user, onLogout }: DashboardProps) {
         />
       )}
 
-      <main className="main-content">
+      <main className="main-content min-w-0 flex-1 w-full overflow-x-hidden min-w-0 max-w-full">
         <header className="topbar">
           <div className="topbar-left">
             <button
@@ -2114,6 +2114,7 @@ function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
 
 

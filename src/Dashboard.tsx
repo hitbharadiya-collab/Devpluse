@@ -284,7 +284,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto min-w-0 max-w-full">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
             const active = route === item.id
@@ -332,7 +332,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         )}
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-w-0 max-w-full">
         <header className="h-16 px-4 lg:px-7 bg-[#090c14]/90 backdrop-blur-md border-b border-slate-800/90 flex items-center justify-between gap-4 sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
@@ -496,7 +496,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-7 max-w-[1520px] w-full mx-auto">
+        <main className="flex-1 p-4 lg:p-7 max-w-[1520px] w-full mx-auto min-w-0 flex-1 w-full overflow-x-hidden min-w-0 max-w-full">
           {route === 'overview' && (
             <OverviewView
               projects={projects}
@@ -601,5 +601,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
 

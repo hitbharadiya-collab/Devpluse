@@ -1435,3 +1435,19 @@ body,
     width: 190px;
   }
 }
+
+/* devpulse-clean-shell: standard flexbox/grid overflow prevention */
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+#root > div, main, section {
+  min-width: 0;
+}
+.recharts-responsive-container {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}

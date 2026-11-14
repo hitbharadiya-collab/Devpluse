@@ -26,32 +26,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
-
-/* devpulse-layout-fix: full-width responsive dashboard + scoped auth centering */
-*, *::before, *::after { box-sizing: border-box; }
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-main, [class*="content"], [class*="dashboard"] {
-  min-width: 0 !important;
-  flex: 1 1 0% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-/* Scope 440px max-width ONLY to auth forms, never dashboard cards */
-form:has(input[type="password"]), form:has(input[maxlength="1"]) {
-  max-width: 440px !important;
-  width: 100% !important;
-  margin: 0 auto !important;
-}
-input[maxlength="1"] {
-  min-width: 0 !important;
-  width: 100% !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: center !important;
-}

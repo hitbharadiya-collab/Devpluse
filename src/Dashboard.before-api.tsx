@@ -1,4 +1,4 @@
-
+﻿
 import { useMemo, useState } from 'react'
 import {
   Activity,
@@ -87,14 +87,14 @@ const activities = [
   {
     icon: GitBranch,
     title: 'New deployment completed',
-    detail: 'DevPulse API · Production',
+    detail: 'DevPulse API Â· Production',
     time: '12 minutes ago',
     color: 'green',
   },
   {
     icon: ShieldCheck,
     title: 'Security scan completed',
-    detail: 'Cloud Infrastructure · No critical issues',
+    detail: 'Cloud Infrastructure Â· No critical issues',
     time: '38 minutes ago',
     color: 'purple',
   },
@@ -108,7 +108,7 @@ const activities = [
   {
     icon: Boxes,
     title: 'Build pipeline updated',
-    detail: 'DevPulse API · CI/CD',
+    detail: 'DevPulse API Â· CI/CD',
     time: '2 hours ago',
     color: 'orange',
   },
@@ -254,7 +254,7 @@ function App() {
         />
       )}
 
-      <main className="main-content">
+      <main className="main-content min-w-0 flex-1 w-full overflow-x-hidden min-w-0 max-w-full">
         <header className="topbar">
           <div className="topbar-left">
             <button
@@ -280,7 +280,7 @@ function App() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
-              <kbd>⌘ K</kbd>
+              <kbd>âŒ˜ K</kbd>
             </div>
             <div className="notification-wrapper">
               <button
@@ -315,7 +315,7 @@ function App() {
                 <span className="status-pulse" />
                 WORKSPACE OVERVIEW
               </div>
-              <h1>Welcome back, Admin <span>✦</span></h1>
+              <h1>Welcome back, Admin <span>âœ¦</span></h1>
               <p>Monitor your projects, deployments, and team performance.</p>
             </div>
             <button className="primary-button" onClick={() => setShowModal(true)}>
@@ -428,7 +428,7 @@ function App() {
                   <h3>Pipeline Health</h3>
                   <p>Current CI/CD status</p>
                 </div>
-                <button className="more-button" aria-label="More pipeline options">•••</button>
+                <button className="more-button" aria-label="More pipeline options">â€¢â€¢â€¢</button>
               </div>
 
               <div className="pipeline-score">
@@ -509,7 +509,7 @@ function App() {
                   <h3>Recent Activity</h3>
                   <p>Latest workspace events</p>
                 </div>
-                <button className="more-button" aria-label="More activity options">•••</button>
+                <button className="more-button" aria-label="More activity options">â€¢â€¢â€¢</button>
               </div>
 
               <div className="activity-list">
@@ -533,7 +533,7 @@ function App() {
           </section>
 
           <footer className="dashboard-footer">
-            <span>© 2026 DevPulse. All rights reserved.</span>
+            <span>Â© 2026 DevPulse. All rights reserved.</span>
             <span><span className="footer-status" /> All services operational</span>
           </footer>
         </div>
