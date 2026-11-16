@@ -206,10 +206,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
     }
   }
 
-  const handlePatchVuln = (id: string) => {
-    setVulnerabilities((prev) => prev.map((v) => (v.id === id ? { ...v, status: 'Patched' } : v)))
-    notify(`Vulnerability ${id} marked as Patched.`)
-  }
+  const handlePatchVuln = async (id: string) => { const target = vulnerabilities.find((v) => v.id === id); setVulnerabilities((prev) => prev.map((v) => (v.id === id ? { ...v, status: 'Patched' } : v))); const cliCmd = target ? `npm audit fix --package=${target.packageOrFile} # Patch ${target.cve}` : `npm audit fix`; try { await navigator.clipboard?.writeText(cliCmd) } catch {}; try { const r = await fetch('/api/vulnerabilities/patch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ id, cve: target?.cve || id }) }); if (r.ok) { notify(`Patched ${target?.cve || id} in PostgreSQL & copied fix CLI!`) } else { notify(`Sign in to persist ${target?.cve || id} in PostgreSQL.`) } } catch { notify(`Saved locally (server unreachable).`) } }
 
   if (authMode === 'login') {
     return (
@@ -603,6 +600,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
 
 
