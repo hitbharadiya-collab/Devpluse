@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+﻿import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   Bell,
@@ -24,15 +24,15 @@ import {
 import { INITIAL_VULNERABILITIES, WORKSPACES } from './data/mockDevPulse'
 import type { AuditEvent, DevProject, NavRoute, PipelineRun, TeamMember, VulnerabilityFinding } from './types/devpulse'
 import { LoginScreen, SecurityPinScreen } from './components/devpulse/AuthScreens'
-import { OverviewView, PipelinesView, ProjectsView } from './components/devpulse/DevOpsViews'
-import {
-  ActivityLogsView,
-  DevSecOpsView,
-  SecurityScansView,
-  SettingsView,
-  TeamView,
-  VulnerabilitiesView,
-} from './components/devpulse/SecurityAdminViews'
+const OverviewView = lazy(() => import('./components/devpulse/DevOpsViews').then((m) => ({ default: m.OverviewView })))
+const ProjectsView = lazy(() => import('./components/devpulse/DevOpsViews').then((m) => ({ default: m.ProjectsView })))
+const PipelinesView = lazy(() => import('./components/devpulse/DevOpsViews').then((m) => ({ default: m.PipelinesView })))
+const DevSecOpsView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.DevSecOpsView })))
+const SecurityScansView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.SecurityScansView })))
+const VulnerabilitiesView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.VulnerabilitiesView })))
+const TeamView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.TeamView })))
+const ActivityLogsView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.ActivityLogsView })))
+const SettingsView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.SettingsView })))
 
 interface UserProfile {
   id?: string | number
@@ -496,7 +496,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         </header>
 
         <main className="flex-1 p-4 lg:p-7 max-w-[1520px] w-full mx-auto min-w-0 flex-1 w-full overflow-x-hidden min-w-0 max-w-full">
-          {route === 'overview' && (
+          <Suspense fallback={<div className="text-xs text-slate-400 py-8 text-center">Loading telemetry module...</div>}>{route === 'overview' && (
             <OverviewView
               projects={projects}
               pipelines={pipelines}
@@ -586,7 +586,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
             />
           )}
           {route === 'activity' && <ActivityLogsView events={events} />}
-          {route === 'settings' && <SettingsView onOpenPinTest={() => setAuthMode('pin')} />}
+          {route === 'settings' && <SettingsView onOpenPinTest={() => setAuthMode('pin')} />}</Suspense>
         </main>
       </div>
 
@@ -600,6 +600,8 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
+
 
 
 
