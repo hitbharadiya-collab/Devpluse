@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import connectPgSimple from 'connect-pg-simple'
 
@@ -77,7 +78,15 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 app.use('/api', healthRouter)
-app.use('/api/auth', authRouter)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts. Please try again in 15 minutes.' },
+})
+
+app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/projects', requireAuth, projectsRouter)
 app.use('/api/teams', requireAuth, teamsRouter)
 app.use('/api/pipelines', pipelinesRouter)
@@ -97,3 +106,4 @@ app.use(notFoundHandler)
 app.use(errorHandler)
 
 export default app
+
