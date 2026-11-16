@@ -1,0 +1,12 @@
+﻿name: DevPulse Render Keep-Alive
+on:
+  schedule:
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping DevPulse Health Endpoint
+        run: curl -fsS https://devpluse.onrender.com/api/health || true

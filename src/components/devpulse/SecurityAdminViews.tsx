@@ -38,7 +38,25 @@ export function DevSecOpsView({
         </div>
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => {
+            const headers = ['ID', 'Title', 'Severity', 'Package/File', 'CVSS', 'Status']
+            const rows = vulnerabilities.map((v) => [
+              v.id,
+              `"${String(v.title || '').replace(/"/g, '""')}"`,
+              v.severity,
+              `"${String(((v as unknown as Record<string, unknown>).package ?? (v as unknown as Record<string, unknown>).file ?? 'core')).replace(/"/g, '""')}"`,
+              String(v.cvss ?? 'N/A'),
+              v.status,
+            ])
+            const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `devpulse-security-report-${new Date().toISOString().slice(0, 10)}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+          }}
           className="px-3.5 py-2 rounded-lg bg-[#0c101a] hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer self-start"
         >
           <Download className="w-3.5 h-3.5 text-cyan-400" /> Export Security Report
@@ -535,5 +553,7 @@ export function SettingsView({ onOpenPinTest }: { onOpenPinTest: () => void }) {
     </div>
   )
 }
+
+
 
 

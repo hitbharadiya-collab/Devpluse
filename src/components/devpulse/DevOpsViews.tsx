@@ -339,6 +339,7 @@ export function ProjectsView({
   const [query, setQuery] = useState('')
   const [envFilter, setEnvFilter] = useState('All')
   const [modalOpen, setModalOpen] = useState(false)
+  const [syncingGh, setSyncingGh] = useState(false)
   const [name, setName] = useState('')
   const [repo, setRepo] = useState('')
   const [language, setLanguage] = useState('TypeScript / Node')
@@ -350,6 +351,37 @@ export function ProjectsView({
     const matchEnv = envFilter === 'All' || p.environment === envFilter
     return matchQ && matchEnv
   })
+
+  const handleSyncGithub = async () => {
+    if (syncingGh) return
+    setSyncingGh(true)
+    try {
+      const res = await fetch('/api/github/repos', { credentials: 'include' })
+      const json = await res.json()
+      if (res.ok && json.success && Array.isArray(json.data)) {
+        const existingNames = new Set(projects.map((p) => p.name.toLowerCase()))
+        json.data.slice(0, 5).forEach((r: { name: string; htmlUrl: string; branch: string; language: string }) => {
+          if (r.name && !existingNames.has(r.name.toLowerCase())) {
+            onAddProject({
+              id: `GH-${Math.floor(100 + Math.random() * 899)}`,
+              name: r.name,
+              repo: r.htmlUrl.replace(/^https?:\/\//, ''),
+              branch: r.branch || 'main',
+              owner: 'hitbharadiya-collab',
+              language: r.language || 'TypeScript',
+              health: 'Healthy',
+              securityScore: 96,
+              openVulns: 0,
+              lastDeploy: 'GitHub Live Sync',
+              environment: 'Production',
+            })
+          }
+        })
+      }
+    } finally {
+      setSyncingGh(false)
+    }
+  }
 
   const handleCreate = (e: FormEvent) => {
     e.preventDefault()
@@ -383,13 +415,23 @@ export function ProjectsView({
           <h1 className="text-xl font-bold text-white">Projects & Repository Inventory</h1>
           <p className="text-xs text-slate-400">Monitored microservices, branch policies, and deployment environments.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer self-start"
-        >
-          <Plus className="w-4 h-4" /> Register Repository
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <button
+            type="button"
+            disabled={syncingGh}
+            onClick={() => void handleSyncGithub()}
+            className="px-3.5 py-2 rounded-lg bg-[#0c101a] hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-cyan-400 flex items-center gap-1.5 cursor-pointer"
+          >
+            <GitBranch className="w-3.5 h-3.5" /> {syncingGh ? 'Syncing GitHub...' : 'Sync GitHub Repos'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Register Repository
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -696,6 +738,7 @@ export function PipelinesView({
     </div>
   )
 }
+
 
 
 
