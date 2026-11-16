@@ -1,4 +1,4 @@
-﻿async function sendDevPulseOtpBrevo(toEmail, otpCode) {
+﻿async function sendDevPulseOtpBrevo(toEmail: string, otpCode: string) {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.SMTP_USER;
   if (!apiKey || !senderEmail) {
@@ -140,7 +140,7 @@ async function sendOtpEmail(toEmail: string, otpCode: string): Promise<boolean> 
       auth: { user: smtpUser, pass: smtpPass },
     })
 
-    await sendDevPulseOtpBrevo(email, otp);return true
+    await sendDevPulseOtpBrevo(toEmail, otpCode); return true
   } catch (err) {
     console.error('[DevPulse OTP] SMTP dispatch error:', err)
     console.log(`[DevPulse OTP Fallback] Code for ${toEmail}: ${otpCode}`)
@@ -662,6 +662,7 @@ authRouter.get('/security-logs', async (_req: Request, res: Response) => {
 })
 
 export default authRouter
+
 
 
 
