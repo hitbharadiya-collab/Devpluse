@@ -31,6 +31,7 @@ export async function initializeDatabase() {
         status VARCHAR(40) NOT NULL DEFAULT 'Active',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      CREATE TABLE IF NOT EXISTS patched_vulnerabilities (vuln_id VARCHAR(80) PRIMARY KEY, cve VARCHAR(80), patched_by VARCHAR(160), patched_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS pipelines (
         id SERIAL PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
@@ -46,3 +47,4 @@ export async function initializeDatabase() {
     console.error('Database initialization warning:', err)
   }
 }
+

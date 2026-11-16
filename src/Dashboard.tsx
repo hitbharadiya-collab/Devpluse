@@ -85,11 +85,12 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 
   const loadLivePostgreSQLData = useCallback(async () => {
     try {
-      const [projRes, pipeRes, teamRes, logsRes] = await Promise.all([
+      const [projRes, pipeRes, teamRes, logsRes, vulnRes] = await Promise.all([
         fetch('/api/projects', { credentials: 'include' }),
         fetch('/api/pipelines', { credentials: 'include' }),
         fetch('/api/teams', { credentials: 'include' }),
         fetch('/api/auth/security-logs', { credentials: 'include' }),
+        fetch('/api/vulnerabilities/patched', { credentials: 'include' }),
       ])
 
       if (projRes.ok) {
@@ -157,6 +158,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
         setTeam(mappedMembers)
       }
 
+      if (vulnRes && vulnRes.ok) { const vj = await vulnRes.json().catch(() => ({})); if (Array.isArray(vj.data)) { const setIds = new Set(vj.data.map(String)); setVulnerabilities((prev) => prev.map((v) => (setIds.has(v.id) ? { ...v, status: 'Patched' } : v))) } }
       if (logsRes.ok) {
         const logsJson = await logsRes.json().catch(() => ({}))
         const mappedEvents: AuditEvent[] = (logsJson.data || []).map((l: Record<string, unknown>) => ({
@@ -601,6 +603,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
 
 
