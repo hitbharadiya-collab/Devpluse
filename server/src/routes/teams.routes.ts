@@ -42,7 +42,7 @@ export async function ensureRbacTables(): Promise<void> {
       org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
       member_email VARCHAR(254) NOT NULL,
       role VARCHAR(24) NOT NULL DEFAULT 'Engineer'
-        CHECK (role IN ('Admin', 'DevSecOps', 'Engineer', 'Viewer')),
+        CHECK (role IN ('Admin', 'DevSecOps', 'Engineer', 'Viewer', 'Security Lead', 'DevOps Engineer', 'Developer', 'Auditor')),
       status VARCHAR(24) NOT NULL DEFAULT 'Active',
       added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       UNIQUE (org_id, member_email)
