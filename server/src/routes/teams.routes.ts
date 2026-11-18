@@ -48,6 +48,8 @@ export async function ensureRbacTables(): Promise<void> {
       UNIQUE (org_id, member_email)
     );
   `)
+  await pool.query("ALTER TABLE organization_members DROP CONSTRAINT IF EXISTS organization_members_role_check");
+  await pool.query("ALTER TABLE organization_members ADD CONSTRAINT organization_members_role_check CHECK (role IN ('Admin', 'DevSecOps', 'Engineer', 'Viewer', 'Security Lead', 'DevOps Engineer', 'Developer', 'Auditor'))");
 }
 
 export async function ensureUserWorkspace(
