@@ -1,4 +1,4 @@
-﻿import { Router, type Request, type Response } from 'express'
+import { Router, type Request, type Response } from 'express'
 import 'express-session'
 import { z } from 'zod'
 import pool from '../config/database.js'
@@ -13,9 +13,9 @@ declare module 'express-session' {
 
 const teamsRouter = Router()
 
-export type WorkspaceRole = 'Admin' | 'DevSecOps' | 'Engineer' | 'Viewer'
+export type WorkspaceRole = 'Admin' | 'DevSecOps' | 'Engineer' | 'Viewer' | 'Security Lead' | 'DevOps Engineer' | 'Developer' | 'Auditor'
 
-const roleEnum = z.enum(['Admin', 'DevSecOps', 'Engineer', 'Viewer'])
+const roleEnum = z.enum(['Admin', 'DevSecOps', 'Engineer', 'Viewer', 'Security Lead', 'DevOps Engineer', 'Developer', 'Auditor'])
 
 const addMemberSchema = z.object({
   email: z.string().trim().toLowerCase().email('Enter a valid email address.').max(254),
