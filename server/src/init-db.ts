@@ -1,4 +1,4 @@
-﻿import fs from 'node:fs'
+import fs from 'node:fs'
 import path from 'node:path'
 import pool from './config/database.js'
 
@@ -23,6 +23,7 @@ export async function initializeDatabase() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret VARCHAR(128);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 
+      ALTER TABLE IF EXISTS organization_members DROP CONSTRAINT IF EXISTS organization_members_role_check;
       CREATE TABLE IF NOT EXISTS teams (
         id SERIAL PRIMARY KEY,
         name VARCHAR(120) NOT NULL,

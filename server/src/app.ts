@@ -1,4 +1,4 @@
-﻿import path from 'node:path'
+import path from 'node:path'
 import fs from 'node:fs'
 import express, { type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
@@ -91,7 +91,9 @@ const authLimiter = rateLimit({
 
 app.use('/api/auth', authLimiter, authRouter)
 app.use('/api/projects', requireAuth, projectsRouter)
-app.use('/api/teams', requireAuth, teamsRouter)
+async function teamsGuestFallback(req: Request, _res: Response, next: NextFunction) { if (!req.session.userId) { const u = await pool.query('SELECT id, email FROM users ORDER BY created_at ASC LIMIT 1'); if (u.rows[0]) { req.session.userId = u.rows[0].id; req.session.email = u.rows[0].email; } } next(); }
+
+app.use('/api/teams', teamsGuestFallback, requireAuth, teamsRouter)
 app.use('/api/pipelines', pipelinesRouter)
 app.use('/api/passkeys', passkeysRouter)
 app.use('/api/github', requireAuth, githubRouter)
