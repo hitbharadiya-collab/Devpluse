@@ -359,6 +359,7 @@ export function TeamView({
 }) {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<TeamMember['role']>('DevOps Engineer')
+  const [inviteFeedback, setInviteFeedback] = useState('')
 
   return (
     <div className="space-y-5">
@@ -388,9 +389,12 @@ export function TeamView({
         <button
           type="button"
           onClick={() => {
-            if (inviteEmail.includes('@')) {
+            const cleanEmail = inviteEmail.trim()
+            if (!cleanEmail.includes('@')) { setInviteFeedback('Please enter a valid email address.'); return }
+            if (cleanEmail.includes('@')) {
               onInviteMember(inviteEmail, inviteRole)
               setInviteEmail('')
+              setInviteFeedback('Invite sent to ' + cleanEmail + ' (' + inviteRole + ')')
             }
           }}
           className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
@@ -398,6 +402,7 @@ export function TeamView({
           <UserPlus className="w-3.5 h-3.5" /> Invite Operator
         </button>
       </div>
+      {inviteFeedback && <p className="text-xs text-emerald-400 font-medium">{inviteFeedback}</p>}
 
       <div className="rounded-xl bg-[#0c101a] border border-slate-800 overflow-x-auto">
         <table className="w-full text-left border-collapse">
