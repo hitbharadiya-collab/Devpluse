@@ -17,6 +17,7 @@ import pipelinesRouter from './routes/pipelines.routes.js'
 import passkeysRouter from './routes/passkeys.routes.js'
 import githubRouter from './routes/github.routes.js'
 import vulnerabilitiesRouter from './routes/vulnerabilities.routes.js'
+import aiRouter from './routes/ai.routes.js'
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js'
 
 const app = express()
@@ -95,6 +96,7 @@ app.use('/api/pipelines', pipelinesRouter)
 app.use('/api/passkeys', passkeysRouter)
 app.use('/api/github', requireAuth, githubRouter)
 app.use('/api/vulnerabilities', requireAuth, vulnerabilitiesRouter)
+app.use('/api/ai', requireAuth, aiRouter)
 
 // Serve built React frontend in production
 const distPath = path.resolve(process.cwd(), 'dist')
@@ -110,6 +112,7 @@ app.use(notFoundHandler)
 app.use(errorHandler)
 
 export default app
+
 
 
 

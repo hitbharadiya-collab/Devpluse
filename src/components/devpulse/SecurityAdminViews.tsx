@@ -15,6 +15,7 @@ import {
 import { SECURITY_SCANS, SECURITY_TREND_DATA } from '../../data/mockDevPulse'
 import type { AuditEvent, TeamMember, VulnerabilityFinding } from '../../types/devpulse'
 import { DemoDataPill, SeverityBadge } from './UiBadges'
+import { AiThreatCopilot } from './AiThreatCopilot'
 
 /* ==================== DEVSECOPS DASHBOARD VIEW ==================== */
 export function DevSecOpsView({
@@ -62,6 +63,8 @@ export function DevSecOpsView({
           <Download className="w-3.5 h-3.5 text-cyan-400" /> Export Security Report
         </button>
       </div>
+
+      <AiThreatCopilot />
 
       {/* 4 DevSecOps Pillar Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -553,6 +556,7 @@ export function SettingsView({ onOpenPinTest }: { onOpenPinTest: () => void }) {
     </div>
   )
 }
+
 
 
 
