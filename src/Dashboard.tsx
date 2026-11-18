@@ -1,7 +1,8 @@
-﻿import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import {
   Activity,
   Bell,
+  Bot,
   Bug,
   ChevronDown,
   ChevronLeft,
@@ -28,6 +29,7 @@ const OverviewView = lazy(() => import('./components/devpulse/DevOpsViews').then
 const ProjectsView = lazy(() => import('./components/devpulse/DevOpsViews').then((m) => ({ default: m.ProjectsView })))
 const PipelinesView = lazy(() => import('./components/devpulse/DevOpsViews').then((m) => ({ default: m.PipelinesView })))
 const DevSecOpsView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.DevSecOpsView })))
+const AiThreatCopilot = lazy(() => import('./components/devpulse/AiThreatCopilot').then((m) => ({ default: m.AiThreatCopilot })))
 const SecurityScansView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.SecurityScansView })))
 const VulnerabilitiesView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.VulnerabilitiesView })))
 const TeamView = lazy(() => import('./components/devpulse/SecurityAdminViews').then((m) => ({ default: m.TeamView })))
@@ -52,6 +54,7 @@ const NAV_ITEMS: { id: NavRoute; label: string; icon: typeof LayoutDashboard }[]
   { id: 'projects', label: 'Projects', icon: FolderGit2 },
   { id: 'pipelines', label: 'CI/CD Pipelines', icon: GitBranch },
   { id: 'devsecops', label: 'DevSecOps', icon: Shield },
+  { id: 'ai-copilot', label: 'AI Threat Copilot', icon: Bot },
   { id: 'scans', label: 'Security Scans', icon: ScanSearch },
   { id: 'vulnerabilities', label: 'Vulnerabilities', icon: Bug },
   { id: 'team', label: 'Team Management', icon: Users },
@@ -557,6 +560,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
           {route === 'devsecops' && (
             <DevSecOpsView vulnerabilities={vulnerabilities} onPatchVuln={handlePatchVuln} />
           )}
+          {route === 'ai-copilot' && <AiThreatCopilot />}
           {route === 'scans' && <SecurityScansView />}
           {route === 'vulnerabilities' && (
             <VulnerabilitiesView vulnerabilities={vulnerabilities} onPatchVuln={handlePatchVuln} />
@@ -600,6 +604,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default Dashboard
+
 
 
 

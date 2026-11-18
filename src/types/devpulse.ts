@@ -2,7 +2,7 @@
   | 'overview'
   | 'projects'
   | 'pipelines'
-  | 'devsecops'
+  | 'devsecops' | 'ai-copilot'
   | 'scans'
   | 'vulnerabilities'
   | 'team'
@@ -93,3 +93,4 @@ export interface AuditEvent {
   timestamp: string
   risk: 'Normal' | 'Elevated'
 }
+
